@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+frontend/dist/
+backend/*.egg-info/
+
+# Environment files - NEVER commit secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.venv/
+venv/
+.pytest_cache/
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
