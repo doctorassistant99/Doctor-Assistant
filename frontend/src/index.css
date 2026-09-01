@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+[dir="rtl"] body {
+  font-family: 'Tajawal', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+}
+
+[dir="rtl"] .ltr-flip {
+  direction: rtl;
+}

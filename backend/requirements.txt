@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+alembic
+pydantic
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1  # passlib 1.7.4 is incompatible with bcrypt>=4.1 (ValueError: password longer than 72 bytes)
+python-multipart
+httpx
+python-dotenv
+pytest
+pytest-asyncio
