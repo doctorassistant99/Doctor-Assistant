@@ -15,7 +15,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    user_role = postgresql.ENUM("admin", "cashier", name="user_role")
+    user_role = postgresql.ENUM("ADMIN", "CASHIER", name="userrole")
     user_role.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(255), nullable=False, unique=True),
         sa.Column("full_name", sa.String(255), nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", user_role, nullable=False, server_default="cashier"),
+        sa.Column("role", user_role, nullable=False, server_default="CASHIER"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
@@ -52,11 +52,11 @@ def upgrade() -> None:
     op.create_index("idx_patients_phone", "patients", ["phone"])
 
     appointment_status = postgresql.ENUM(
-        "scheduled", "confirmed", "checked_in", "completed", "cancelled", "no_show",
-        name="appointment_status",
+        "SCHEDULED", "CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED", "NO_SHOW",
+        name="appointmentstatus",
     )
     appointment_status.create(op.get_bind(), checkfirst=True)
-    booking_source = postgresql.ENUM("online", "reception", "phone", "manual", name="booking_source")
+    booking_source = postgresql.ENUM("ONLINE", "RECEPTION", "PHONE", "MANUAL", name="bookingsource")
     booking_source.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
@@ -67,9 +67,9 @@ def upgrade() -> None:
         sa.Column("appointment_date", sa.Date(), nullable=False),
         sa.Column("start_time", sa.Time(), nullable=False),
         sa.Column("end_time", sa.Time(), nullable=False),
-        sa.Column("status", appointment_status, nullable=False, server_default="scheduled"),
+        sa.Column("status", appointment_status, nullable=False, server_default="SCHEDULED"),
         sa.Column("service", sa.String(255), nullable=True),
-        sa.Column("booking_source", booking_source, nullable=False, server_default="manual"),
+        sa.Column("booking_source", booking_source, nullable=False, server_default="MANUAL"),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
@@ -98,9 +98,9 @@ def upgrade() -> None:
     )
     op.create_index("idx_visits_patient_id", "visits", ["patient_id"])
 
-    payment_method = postgresql.ENUM("cash", "card", "transfer", "other", name="payment_method")
+    payment_method = postgresql.ENUM("CASH", "CARD", "TRANSFER", "OTHER", name="paymentmethod")
     payment_method.create(op.get_bind(), checkfirst=True)
-    transaction_type = postgresql.ENUM("consultation", "payment", "refund", "other", name="transaction_type")
+    transaction_type = postgresql.ENUM("CONSULTATION", "PAYMENT", "REFUND", "OTHER", name="transactiontype")
     transaction_type.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
@@ -197,8 +197,8 @@ def downgrade() -> None:
     op.drop_table("appointments")
     op.drop_table("patients")
     op.drop_table("users")
-    op.execute("DROP TYPE IF EXISTS transaction_type")
-    op.execute("DROP TYPE IF EXISTS payment_method")
-    op.execute("DROP TYPE IF EXISTS booking_source")
-    op.execute("DROP TYPE IF EXISTS appointment_status")
-    op.execute("DROP TYPE IF EXISTS user_role")
+    op.execute("DROP TYPE IF EXISTS transactiontype")
+    op.execute("DROP TYPE IF EXISTS paymentmethod")
+    op.execute("DROP TYPE IF EXISTS bookingsource")
+    op.execute("DROP TYPE IF EXISTS appointmentstatus")
+    op.execute("DROP TYPE IF EXISTS userrole")

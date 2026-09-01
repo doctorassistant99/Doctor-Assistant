@@ -7,14 +7,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================
 -- USERS TABLE (Internal users: Admin, Cashier/Receptionist)
 -- ============================================================
-CREATE TYPE user_role AS ENUM ('admin', 'cashier');
+CREATE TYPE userrole AS ENUM ('ADMIN', 'CASHIER');
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
     full_name VARCHAR(255) NOT NULL,
     hashed_password VARCHAR(255) NOT NULL,
-    role user_role NOT NULL DEFAULT 'cashier',
+    role userrole NOT NULL DEFAULT 'CASHIER',
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -50,8 +50,8 @@ CREATE INDEX idx_patients_created_at ON patients(created_at);
 -- ============================================================
 -- APPOINTMENTS TABLE
 -- ============================================================
-CREATE TYPE appointment_status AS ENUM ('scheduled', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show');
-CREATE TYPE booking_source AS ENUM ('online', 'reception', 'phone', 'manual');
+CREATE TYPE appointmentstatus AS ENUM ('SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
+CREATE TYPE bookingsource AS ENUM ('ONLINE', 'RECEPTION', 'PHONE', 'MANUAL');
 
 CREATE TABLE appointments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -60,9 +60,9 @@ CREATE TABLE appointments (
     appointment_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    status appointment_status NOT NULL DEFAULT 'scheduled',
+    status appointmentstatus NOT NULL DEFAULT 'SCHEDULED',
     service VARCHAR(255),
-    booking_source booking_source NOT NULL DEFAULT 'manual',
+    booking_source bookingsource NOT NULL DEFAULT 'MANUAL',
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -103,16 +103,16 @@ CREATE INDEX idx_visits_appointment_id ON visits(appointment_id);
 -- ============================================================
 -- TRANSACTIONS TABLE (Financial records)
 -- ============================================================
-CREATE TYPE payment_method AS ENUM ('cash', 'card', 'transfer', 'other');
-CREATE TYPE transaction_type AS ENUM ('consultation', 'payment', 'refund', 'other');
+CREATE TYPE paymentmethod AS ENUM ('CASH', 'CARD', 'TRANSFER', 'OTHER');
+CREATE TYPE transactiontype AS ENUM ('CONSULTATION', 'PAYMENT', 'REFUND', 'OTHER');
 
 CREATE TABLE transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     invoice_number VARCHAR(50) NOT NULL UNIQUE,
     patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
     visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
-    transaction_type transaction_type NOT NULL,
-    payment_method payment_method NOT NULL,
+    transaction_type transactiontype NOT NULL,
+    payment_method paymentmethod NOT NULL,
     amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
     description TEXT,
     notes TEXT,
@@ -238,7 +238,7 @@ VALUES (
     'admin@doctor.com',
     'System Administrator',
     '$2b$12$Uo0KkMq3MzEwcxqXcLWvw.VMz0rZUDfOcHbQIhAO10zGn7YILJ12K',
-    'admin',
+    'ADMIN',
     true
 );
 

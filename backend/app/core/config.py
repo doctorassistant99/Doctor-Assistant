@@ -5,7 +5,10 @@ from typing import Any
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:mcbhpjejmilyrqfienja@db.mcbhpjejmilyrqfienja.supabase.co:5432/postgres"
+    # Supabase Shared Pooler (Supavisor). The real password must be supplied
+    # through the DATABASE_URL environment variable in the deployment target;
+    # never commit it to the repository.
+    DATABASE_URL: str = "postgresql+asyncpg://postgres.mcbhpjejmilyrqfienja:[YOUR-PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:6543/postgres"
     SUPABASE_URL: str = "https://mcbhpjejmilyrqfienja.supabase.co"
     SUPABASE_PUBLISHABLE_KEY: str = "sb_publishable_q38z2EmOefibTR_Tgp6Pew_PmBb8LgS"
     SECRET_KEY: str = "your-secret-key-change-in-production"
