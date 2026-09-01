@@ -21,13 +21,25 @@ class Settings(BaseSettings):
         raw = self.CORS_ORIGINS.strip()
         if not raw:
             return []
+        parsed_origins: list[str] = []
         try:
             parsed = json.loads(raw)
             if isinstance(parsed, list):
-                return [str(item) for item in parsed]
+                parsed_origins = [str(item) for item in parsed]
+            elif isinstance(parsed, str) and parsed:
+                parsed_origins = [parsed]
         except (json.JSONDecodeError, ValueError):
             pass
-        return [item.strip() for item in raw.split(",") if item.strip()]
+        if not parsed_origins:
+            parsed_origins = [item for item in raw.split(",") if item.strip()]
+        seen: set[str] = set()
+        unique: list[str] = []
+        for item in parsed_origins:
+            normalized = item.strip().strip('"').rstrip("/")
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                unique.append(normalized)
+        return unique
 
     class Config:
         env_file = ".env"
