@@ -142,8 +142,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
 
-    op.execute("CREATE SEQUENCE IF NOT EXISTS invoice_daily_seq START 1")
-
     op.execute("""
     CREATE OR REPLACE FUNCTION generate_invoice_number()
     RETURNS TRIGGER AS $$
@@ -151,8 +149,12 @@ def upgrade() -> None:
         today_str TEXT;
         seq_num INTEGER;
     BEGIN
+        PERFORM pg_advisory_xact_lock(hashtext('invoice_number_generator'));
         today_str := to_char(NOW(), 'YYMMDD');
-        seq_num := nextval('invoice_daily_seq');
+        SELECT COALESCE(MAX(CAST(RIGHT(invoice_number, 4) AS INTEGER)), 0) + 1
+        INTO seq_num
+        FROM transactions
+        WHERE invoice_number LIKE today_str || '%';
         NEW.invoice_number := today_str || LPAD(seq_num::TEXT, 4, '0');
         RETURN NEW;
     END;
@@ -195,7 +197,6 @@ def downgrade() -> None:
     op.drop_table("appointments")
     op.drop_table("patients")
     op.drop_table("users")
-    op.execute("DROP SEQUENCE IF EXISTS invoice_daily_seq")
     op.execute("DROP TYPE IF EXISTS transaction_type")
     op.execute("DROP TYPE IF EXISTS payment_method")
     op.execute("DROP TYPE IF EXISTS booking_source")

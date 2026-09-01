@@ -149,13 +149,11 @@ CREATE TABLE clinic_settings (
 );
 
 -- ============================================================
--- INVOICE NUMBER SEQUENCE
--- ============================================================
-CREATE SEQUENCE invoice_daily_seq START 1;
-
--- ============================================================
 -- FUNCTION: Generate Invoice Number
--- Format: YYMMDD + 4-digit sequential number
+-- Format: YYMMDD + 4-digit DAILY sequence number
+-- The sequence RESETS every day (first invoice of a new day = 0001).
+-- A pg advisory lock serializes concurrent invoice generation so
+-- two simultaneous inserts can never receive the same number.
 -- ============================================================
 CREATE OR REPLACE FUNCTION generate_invoice_number()
 RETURNS TRIGGER AS $$
@@ -163,8 +161,18 @@ DECLARE
     today_str TEXT;
     seq_num INTEGER;
 BEGIN
+    -- Serialize concurrent invoice-number generation for today
+    PERFORM pg_advisory_xact_lock(hashtext('invoice_number_generator'));
+
     today_str := to_char(NOW(), 'YYMMDD');
-    seq_num := nextval('invoice_daily_seq');
+
+    -- Next sequence number for TODAY only. On a new day this
+    -- returns 0, so the sequence resets to 0001.
+    SELECT COALESCE(MAX(CAST(RIGHT(invoice_number, 4) AS INTEGER)), 0) + 1
+    INTO seq_num
+    FROM transactions
+    WHERE invoice_number LIKE today_str || '%';
+
     NEW.invoice_number := today_str || LPAD(seq_num::TEXT, 4, '0');
     RETURN NEW;
 END;
@@ -205,6 +213,10 @@ CREATE TRIGGER trg_update_patient_visit_count
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS)
+-- RLS is ENABLED on all tables with NO anon/authenticated policies.
+-- Default deny: the public publishable/anon key CANNOT read or write
+-- any medical data. Only the Supabase service role (used by the
+-- backend, and which bypasses RLS) can access these tables.
 -- ============================================================
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
@@ -213,14 +225,8 @@ ALTER TABLE visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clinic_settings ENABLE ROW LEVEL SECURITY;
 
--- Policies: service role bypasses RLS (backend uses service role key)
--- These policies are for direct Supabase client access if needed later
-CREATE POLICY "Service role full access" ON users FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON patients FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON appointments FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON visits FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON transactions FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON clinic_settings FOR ALL USING (true) WITH CHECK (true);
+-- Phase 2 will add scoped policies (e.g. patient:read-own) when the
+-- public booking website is built. Do NOT add permissive policies here.
 
 -- ============================================================
 -- SEED DATA: Default admin user (password: admin123 - hashed with bcrypt)
@@ -231,7 +237,7 @@ VALUES (
     uuid_generate_v4(),
     'admin@doctor.com',
     'System Administrator',
-    '$2b$12$LJ3m4ys3Lg.Ky7MjMYkzYOBvMHxzfXkVqXoL7VXjMj8mVL7Z8Sj3S',
+    '$2b$12$Uo0KkMq3MzEwcxqXcLWvw.VMz0rZUDfOcHbQIhAO10zGn7YILJ12K',
     'admin',
     true
 );
