@@ -1,9 +1,15 @@
 import axios from "axios";
 
+const DEFAULT_API_BASE = "https://doctor-assistant-api-seven.vercel.app/api/v1";
+
+function ensureApiV1(url: string): string {
+  const trimmed = url.trim().replace(/\/+$/, "");
+  const withoutPrefix = trimmed.replace(/\/api\/v1$/, "");
+  return `${withoutPrefix}/api/v1`;
+}
+
 const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    "https://doctor-assistant-api-seven.vercel.app/api/v1",
+  baseURL: ensureApiV1(import.meta.env.VITE_API_URL || DEFAULT_API_BASE),
   headers: {
     "Content-Type": "application/json",
   },
