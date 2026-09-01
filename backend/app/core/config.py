@@ -20,6 +20,19 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
 
     @property
+    def cors_allow_origin_regex(self) -> str | None:
+        # Allow the stable production frontend alias (explicitly matched here
+        # for safety) plus every Vercel deployment/preview URL of the frontend
+        # project. Vercel only allocates "*-doctor-assistant.vercel.app"
+        # subdomains to the owner of the "doctor-assistant" project, so no
+        # third party can register an origin matching this pattern.
+        # Keep this byte-for-byte in sync with CORS_ORIGINS tiers.
+        return (
+            r"^https://doctor-assistant-ten\.vercel\.app$"
+            r"|^https://[a-z0-9-]+-doctor-assistant\.vercel\.app$"
+        )
+
+    @property
     def cors_origins_list(self) -> list[str]:
         raw = self.CORS_ORIGINS.strip()
         if not raw:
